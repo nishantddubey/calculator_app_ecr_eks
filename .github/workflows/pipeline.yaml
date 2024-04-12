@@ -46,3 +46,4 @@ jobs:
         kubectl apply -f ./deployment.yaml
         kubectl get svc
         kubectl get all
+        python ./app.py
