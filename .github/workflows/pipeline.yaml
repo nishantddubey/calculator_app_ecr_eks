@@ -44,4 +44,5 @@ jobs:
     - name: Deployment using Yaml file
       run: |
         kubectl apply -f ./deployment.yaml
-        kubectl get svc
+        kubectl get all
+        
