@@ -1,23 +1,28 @@
 name: calculator application Deployment
+
+# the workflow will run on pushes and pull requests targeting the "main" branch.
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
+# Defines a job named "deploy" that runs on an Ubuntu environment.
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  #Checks out the code from the repository into the runner.
 
+# Installs kubectl, the Kubernetes command-line tool, for interacting with the EKS cluster.
     - name: Install kubectl
       uses: azure/setup-kubectl@v2.0
       with:
         version: 'v1.27.0' # default is latest stable
       id: install
 
+# Configures AWS credentials needed to authenticate with ECR and EKS.
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -25,10 +30,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-south-1
 
+# Logs into Amazon ECR (Elastic Container Registry) to push Docker images.
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
+# Builds a Docker image for the calculator application, tags it, and pushes it to Amazon ECR.
     - name: Build, tag, and push docker image to Amazon ECR
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -38,11 +45,13 @@ jobs:
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
+# Updates the kubeconfig file to enable kubectl to communicate with the EKS cluster named "my-cluster".
     - name: Update kube config
       run: aws eks update-kubeconfig --name my-cluster
 
+# Applies the Kubernetes manifest file (deployment.yaml) to deploy the application to the EKS cluster.
     - name: Deployment using Yaml file
       run: |
         kubectl apply -f ./deployment.yaml
-        kubectl get all
+        kubectl get svc
         
